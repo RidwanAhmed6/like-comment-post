@@ -13,16 +13,17 @@
     <form id="postForm">
         <input type="text" id="author" placeholder="Your Name" required>
         <textarea id="content" placeholder="Write your post..." required></textarea>
+        <input type="file" id="image" accept="image/*">
         <button type="submit">Post</button>
     </form>
 
-    <!-- পোস্ট দেখানোর জন্য -->
+    <!-- পোস্ট লিস্ট -->
     <div id="posts"></div>
 
-    <!-- Firebase এবং স্ক্রিপ্ট ফাইল -->
+    <!-- Firebase এবং স্ক্রিপ্ট -->
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-storage.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
-
