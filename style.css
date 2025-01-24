@@ -1,1 +1,106 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f2f5;
+    margin: 0;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+form {
+    max-width: 500px;
+    margin: 20px auto;
+    background: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+form input, form textarea, form button {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+form button {
+    background-color: #1877f2;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+form button:hover {
+    background-color: #145dbf;
+}
+
+#posts {
+    max-width: 500px;
+    margin: 20px auto;
+}
+
+.post {
+    background: #fff;
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.post h3 {
+    margin: 0 0 10px;
+    color: #333;
+}
+
+.post p {
+    margin: 0 0 10px;
+    color: #555;
+}
+
+.post small {
+    color: #888;
+    font-size: 12px;
+}
+
+.post-footer {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.like-btn {
+    background-color: #e4e6eb;
+    color: #333;
+    border: none;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+}
+
+.like-btn:hover {
+    background-color: #d1d1d1;
+}
+
+.comment-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.comment-section form {
+    display: flex;
+    gap: 10px;
+}
+
+.comment-section input {
+    flex: 1;
+    padding: 5px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+}
 
