@@ -1,20 +1,22 @@
-// Firebase কনফিগারেশন
+// Firebase Configuration
 const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "YOUR_AUTH_DOMAIN",
-    databaseURL: "YOUR_DATABASE_URL",
-    projectId: "YOUR_PROJECT_ID",
-    storageBucket: "YOUR_STORAGE_BUCKET",
-    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-    appId: "YOUR_APP_ID"
+    apiKey: "AIzaSyCrmbAsLvAWY9nE7a3u3pbNQqDf6zAy248",
+    authDomain: "like-comment-post.firebaseapp.com",
+    databaseURL: "https://like-comment-post-default-rtdb.firebaseio.com",
+    projectId: "like-comment-post",
+    storageBucket: "like-comment-post.firebasestorage.app",
+    messagingSenderId: "469584146209",
+    appId: "1:469584146209:web:164c11d771757d77b09860"
 };
 
-// Firebase ইনিশিয়ালাইজ
-const app = firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
-const storage = firebase.storage();
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+const database = firebase.database();
 
-// পোস্ট সাবমিট করা
+// Imgur API Client ID
+const IMGUR_CLIENT_ID = '4d8fd349e145537';
+
+// পোস্ট ফর্ম সাবমিট
 document.getElementById('postForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -25,51 +27,109 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
     let imageUrl = null;
 
     if (imageFile) {
-        const storageRef = storage.ref(`images/${Date.now()}_${imageFile.name}`);
-        await storageRef.put(imageFile);
-        imageUrl = await storageRef.getDownloadURL();
+        // ইমগুর API-এর মাধ্যমে ছবি আপলোড
+        const formData = new FormData();
+        formData.append('image', imageFile);
+
+        const response = await fetch('https://api.imgur.com/3/image', {
+            method: 'POST',
+            headers: {
+                Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+            },
+            body: formData,
+        });
+
+        const data = await response.json();
+        imageUrl = data.data.link;
     }
 
-    db.ref('posts').push({
+    // নতুন পোস্ট ডেটা
+    const newPost = {
         author,
         content,
-        image: imageUrl,
+        image: imageUrl || null,
         likes: 0,
-        timestamp: Date.now()
-    });
+        comments: [],
+        timestamp: new Date().toISOString(),
+    };
+
+    // ডেটাবেসে সেভ
+    database.ref('posts').push(newPost);
 
     document.getElementById('postForm').reset();
 });
 
-// পোস্ট লোড করা
-const postsContainer = document.getElementById('posts');
-db.ref('posts').on('child_added', (snapshot) => {
-    const post = snapshot.val();
-    const postId = snapshot.key;
+// পোস্ট রেন্ডার করা
+const renderPosts = () => {
+    const postsContainer = document.getElementById('posts');
+    postsContainer.innerHTML = '';
 
-    const postElement = document.createElement('div');
-    postElement.classList.add('post');
-    postElement.innerHTML = `
-        <h3>${post.author}</h3>
-        <p>${post.content}</p>
-        ${post.image ? `<img src="${post.image}" alt="Post Image">` : ''}
-        <small>${new Date(post.timestamp).toLocaleString()}</small>
-        <div class="post-footer">
-            <button class="like-btn" onclick="likePost('${postId}')">❤️ Like</button>
-            <span id="likes-${postId}">${post.likes} Likes</span>
-        </div>
-    `;
-
-    postsContainer.prepend(postElement);
-});
-
-// লাইক সিস্টেম
-function likePost(postId) {
-    const postRef = db.ref(`posts/${postId}`);
-    postRef.transaction((post) => {
-        if (post) {
-            post.likes = (post.likes || 0) + 1;
+    database.ref('posts').on('value', (snapshot) => {
+        const posts = snapshot.val();
+        if (posts) {
+            Object.keys(posts).forEach((key) => {
+                const post = posts[key];
+                const postElement = document.createElement('div');
+                postElement.classList.add('post');
+                postElement.innerHTML = `
+                    <h3>${post.author}</h3>
+                    <p>${post.content}</p>
+                    ${
+                        post.image
+                            ? `<img src="${post.image}" alt="Post Image">`
+                            : ''
+                    }
+                    <small>${new Date(post.timestamp).toLocaleString()}</small>
+                    <div class="post-footer">
+                        <button onclick="likePost('${key}')">❤️ Like</button>
+                        <span>${post.likes} Likes</span>
+                    </div>
+                    <div class="comments">
+                        <h4>Comments:</h4>
+                        <ul id="comments-${key}">
+                            ${post.comments
+                                .map(
+                                    (comment) =>
+                                        `<li><strong>${comment.author}:</strong> ${comment.text}</li>`
+                                )
+                                .join('')}
+                        </ul>
+                        <input type="text" id="comment-input-${key}" placeholder="Write a comment...">
+                        <button onclick="addComment('${key}')">Add Comment</button>
+                    </div>
+                `;
+                postsContainer.appendChild(postElement);
+            });
         }
-        return post;
     });
-}
+};
+
+// লাইক
+const likePost = (postId) => {
+    const postRef = database.ref(`posts/${postId}`);
+    postRef.get().then((snapshot) => {
+        const post = snapshot.val();
+        postRef.update({ likes: post.likes + 1 });
+    });
+};
+
+// কমেন্ট
+const addComment = (postId) => {
+    const commentInput = document.getElementById(`comment-input-${postId}`);
+    const commentText = commentInput.value;
+
+    if (commentText) {
+        const postRef = database.ref(`posts/${postId}`);
+        postRef.get().then((snapshot) => {
+            const post = snapshot.val();
+            const updatedComments = post.comments || [];
+            updatedComments.push({ author: 'Anonymous', text: commentText });
+
+            postRef.update({ comments: updatedComments });
+        });
+        commentInput.value = '';
+    }
+};
+
+// রেন্ডার পোস্টস
+renderPosts();
