@@ -27,20 +27,8 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
     let imageUrl = null;
 
     if (imageFile) {
-        // ইমগুর API-এর মাধ্যমে ছবি আপলোড
-        const formData = new FormData();
-        formData.append('image', imageFile);
-
-        const response = await fetch('https://api.imgur.com/3/image', {
-            method: 'POST',
-            headers: {
-                Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
-            },
-            body: formData,
-        });
-
-        const data = await response.json();
-        imageUrl = data.data.link;
+        // Imgur API দিয়ে ছবি আপলোড করা
+        imageUrl = await uploadImageToImgur(imageFile);
     }
 
     // নতুন পোস্ট ডেটা
@@ -58,6 +46,35 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
 
     document.getElementById('postForm').reset();
 });
+
+// Imgur API দিয়ে ছবি আপলোড করার ফাংশন
+async function uploadImageToImgur(imageFile) {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+
+    try {
+        const response = await fetch('https://api.imgur.com/3/image', {
+            method: 'POST',
+            headers: {
+                Authorization: `Client-ID ${IMGUR_CLIENT_ID}`,
+            },
+            body: formData,
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            return data.data.link;  // ছবির URL ফেরত দিবে
+        } else {
+            throw new Error('Imgur upload failed');
+        }
+    } catch (error) {
+        console.error('Error uploading image to Imgur:', error);
+        return null;
+    }
+}
+
+
+   
 
 // পোস্ট রেন্ডার করা
 const renderPosts = () => {
@@ -104,16 +121,8 @@ const renderPosts = () => {
     });
 };
 
-// লাইক
-const likePost = (postId) => {
-    const postRef = database.ref(`posts/${postId}`);
-    postRef.get().then((snapshot) => {
-        const post = snapshot.val();
-        postRef.update({ likes: post.likes + 1 });
-    });
-};
 
-// কমেন্ট
+// কমেন্ট ফাংশন
 const addComment = (postId) => {
     const commentInput = document.getElementById(`comment-input-${postId}`);
     const commentText = commentInput.value;
