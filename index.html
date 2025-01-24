@@ -1,1 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facebook Style Blog</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>Facebook Style Blog</h1>
+
+    <!-- পোস্ট ফর্ম -->
+    <form id="postForm">
+        <input type="text" id="author" placeholder="Your Name" required>
+        <textarea id="content" placeholder="Write your post..." required></textarea>
+        <button type="submit">Post</button>
+    </form>
+
+    <!-- পোস্ট দেখানোর জন্য -->
+    <div id="posts"></div>
+
+    <!-- Firebase এবং স্ক্রিপ্ট ফাইল -->
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.x.x/firebase-database.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
 
