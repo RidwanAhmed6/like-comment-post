@@ -9,66 +9,58 @@ const firebaseConfig = {
     appId: "YOUR_APP_ID"
 };
 
-// Firebase ইনিশিয়ালাইজ করা
+// Firebase ইনিশিয়ালাইজ
 const app = firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const storage = firebase.storage();
 
-// পোস্ট সাবমিশন হ্যান্ডল করা
-document.getElementById('postForm').addEventListener('submit', (e) => {
+// পোস্ট সাবমিট করা
+document.getElementById('postForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    // ফর্ম থেকে ডেটা নেওয়া
     const author = document.getElementById('author').value;
     const content = document.getElementById('content').value;
+    const imageFile = document.getElementById('image').files[0];
 
-    // ডাটাবেসে পোস্ট সংরক্ষণ করা
-    const postsRef = db.ref('posts');
-    postsRef.push({
-        author: author,
-        content: content,
+    let imageUrl = null;
+
+    if (imageFile) {
+        const storageRef = storage.ref(`images/${Date.now()}_${imageFile.name}`);
+        await storageRef.put(imageFile);
+        imageUrl = await storageRef.getDownloadURL();
+    }
+
+    db.ref('posts').push({
+        author,
+        content,
+        image: imageUrl,
         likes: 0,
         timestamp: Date.now()
     });
 
-    // ফর্ম রিসেট করা
     document.getElementById('postForm').reset();
 });
 
 // পোস্ট লোড করা
 const postsContainer = document.getElementById('posts');
-const postsRef = db.ref('posts');
-
-postsRef.on('child_added', (snapshot) => {
+db.ref('posts').on('child_added', (snapshot) => {
     const post = snapshot.val();
     const postId = snapshot.key;
 
-    // পোস্ট HTML তৈরি করা
     const postElement = document.createElement('div');
     postElement.classList.add('post');
     postElement.innerHTML = `
         <h3>${post.author}</h3>
         <p>${post.content}</p>
+        ${post.image ? `<img src="${post.image}" alt="Post Image">` : ''}
         <small>${new Date(post.timestamp).toLocaleString()}</small>
         <div class="post-footer">
             <button class="like-btn" onclick="likePost('${postId}')">❤️ Like</button>
-            <span id="${postId}-likes">${post.likes} Likes</span>
-        </div>
-        <div class="comment-section">
-            <h4>Comments</h4>
-            <form onsubmit="addComment(event, '${postId}')">
-                <input type="text" placeholder="Write a comment..." required>
-                <button type="submit">Submit</button>
-            </form>
-            <div id="${postId}-comments"></div>
+            <span id="likes-${postId}">${post.likes} Likes</span>
         </div>
     `;
 
-    // পোস্ট কন্টেইনারে যুক্ত করা
     postsContainer.prepend(postElement);
-
-    // লাইক এবং কমেন্ট লোড করা
-    loadLikes(postId);
-    loadComments(postId);
 });
 
 // লাইক সিস্টেম
@@ -81,39 +73,3 @@ function likePost(postId) {
         return post;
     });
 }
-
-function loadLikes(postId) {
-    const likesRef = db.ref(`posts/${postId}/likes`);
-    likesRef.on('value', (snapshot) => {
-        const likes = snapshot.val();
-        document.getElementById(`${postId}-likes`).textContent = `${likes} Likes`;
-    });
-}
-
-// কমেন্ট সিস্টেম
-function addComment(event, postId) {
-    event.preventDefault();
-    const commentInput = event.target.querySelector('input');
-    const commentText = commentInput.value;
-
-    const commentsRef = db.ref(`comments/${postId}`);
-    commentsRef.push({
-        text: commentText,
-        timestamp: Date.now()
-    });
-
-    commentInput.value = '';
-}
-
-function loadComments(postId) {
-    const commentsContainer = document.getElementById(`${postId}-comments`);
-    const commentsRef = db.ref(`comments/${postId}`);
-
-    commentsRef.on('child_added', (snapshot) => {
-        const comment = snapshot.val();
-        const commentElement = document.createElement('div');
-        commentElement.textContent = `${new Date(comment.timestamp).toLocaleString()}: ${comment.text}`;
-        commentsContainer.appendChild(commentElement);
-    });
-}
-
