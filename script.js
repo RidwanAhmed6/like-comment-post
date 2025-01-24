@@ -4,14 +4,15 @@ const firebaseConfig = {
     authDomain: "like-comment-post.firebaseapp.com",
     databaseURL: "https://like-comment-post-default-rtdb.firebaseio.com",
     projectId: "like-comment-post",
-    storageBucket: "like-comment-post.firebasestorage.app",
+    storageBucket: "like-comment-post.appspot.com",
     messagingSenderId: "469584146209",
     appId: "1:469584146209:web:164c11d771757d77b09860"
 };
 
 // Initialize Firebase
-firebase.initializeApp(firebaseConfig);
-const database = firebase.database();
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database(app);
+const storage = firebase.storage(app);
 
 // Imgur API Client ID
 const IMGUR_CLIENT_ID = '4d8fd349e145537';
@@ -73,9 +74,6 @@ async function uploadImageToImgur(imageFile) {
     }
 }
 
-
-   
-
 // পোস্ট রেন্ডার করা
 const renderPosts = () => {
     const postsContainer = document.getElementById('posts');
@@ -93,7 +91,7 @@ const renderPosts = () => {
                     <p>${post.content}</p>
                     ${
                         post.image
-                            ? `<img src="${post.image}" alt="Post Image">`
+                            ? `<img src="${post.image}" alt="Post Image" style="width:100%; max-width:500px; height:auto;">`
                             : ''
                     }
                     <small>${new Date(post.timestamp).toLocaleString()}</small>
@@ -121,7 +119,6 @@ const renderPosts = () => {
     });
 };
 
-
 // কমেন্ট ফাংশন
 const addComment = (postId) => {
     const commentInput = document.getElementById(`comment-input-${postId}`);
@@ -138,6 +135,15 @@ const addComment = (postId) => {
         });
         commentInput.value = '';
     }
+};
+
+// লাইক ফাংশন
+const likePost = (postId) => {
+    const postRef = database.ref(`posts/${postId}`);
+    postRef.get().then((snapshot) => {
+        const post = snapshot.val();
+        postRef.update({ likes: post.likes + 1 });
+    });
 };
 
 // রেন্ডার পোস্টস
